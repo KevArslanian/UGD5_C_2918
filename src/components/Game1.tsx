@@ -135,6 +135,9 @@ export default function Game1({ onBack }: Game1Props) {
   const [catalystCost, setCatalystCost] = useState(52);
   const [goldenBloomCost, setGoldenBloomCost] = useState(96);
   const [completedOrders, setCompletedOrders] = useState(0);
+  const [activeOrder, setActiveOrder] = useState<PotionOrder>(() =>
+    createPotionOrder(1, 1, 0),
+  );
   const [floatingSparks, setFloatingSparks] = useState<FloatingSpark[]>([]);
   const [goldenIngredient, setGoldenIngredient] = useState<GoldenIngredient | null>(
     null,
@@ -168,15 +171,6 @@ export default function Game1({ onBack }: Game1Props) {
   const passiveBrew = useMemo(
     () => Math.round(autoBrew * brewMultiplier),
     [autoBrew, brewMultiplier],
-  );
-  const activeOrder = useMemo(
-    () =>
-      createPotionOrder(
-        completedOrders + 1,
-        reputationInfo.level,
-        totalBrewed,
-      ),
-    [completedOrders, reputationInfo.level, totalBrewed],
   );
   const orderProgressValue = useMemo(
     () => Math.max(totalBrewed - activeOrder.startBrewed, 0),
@@ -459,6 +453,15 @@ export default function Game1({ onBack }: Game1Props) {
       return;
     }
 
+    const nextReputationLevel = getReputationProgress(
+      totalReputation + activeOrder.reputationReward,
+    ).level;
+    const nextOrder = createPotionOrder(
+      activeOrder.id + 1,
+      nextReputationLevel,
+      totalBrewed,
+    );
+
     setEssence((previousEssence) => {
       const updatedEssence = previousEssence + activeOrder.reward;
 
@@ -472,6 +475,7 @@ export default function Game1({ onBack }: Game1Props) {
       (previousReputation) => previousReputation + activeOrder.reputationReward,
     );
     setCompletedOrders((previousCompletedOrders) => previousCompletedOrders + 1);
+    setActiveOrder(nextOrder);
     addSpark(
       `Order +${formatNumber(activeOrder.reward)}`,
       "gold",
