@@ -32,7 +32,6 @@ type PotionOrder = {
   name: string;
   reputationReward: number;
   reward: number;
-  startBrewed: number;
   target: number;
 };
 
@@ -104,7 +103,6 @@ function getReputationProgress(totalReputation: number) {
 function createPotionOrder(
   orderId: number,
   reputationLevel: number,
-  startBrewed: number,
 ): PotionOrder {
   const adjective = ADJECTIVES[(orderId + reputationLevel) % ADJECTIVES.length];
   const potionName = POTION_NAMES[(orderId * 2 + reputationLevel) % POTION_NAMES.length];
@@ -117,14 +115,12 @@ function createPotionOrder(
     name: `${adjective} ${potionName}`,
     reputationReward,
     reward,
-    startBrewed,
     target,
   };
 }
 
 export default function Game1({ onBack }: Game1Props) {
   const [essence, setEssence] = useState(0);
-  const [totalBrewed, setTotalBrewed] = useState(0);
   const [totalReputation, setTotalReputation] = useState(0);
   const [stirPower, setStirPower] = useState(1);
   const [autoBrew, setAutoBrew] = useState(1);
@@ -135,8 +131,9 @@ export default function Game1({ onBack }: Game1Props) {
   const [catalystCost, setCatalystCost] = useState(52);
   const [goldenBloomCost, setGoldenBloomCost] = useState(96);
   const [completedOrders, setCompletedOrders] = useState(0);
+  const [activeOrderProgress, setActiveOrderProgress] = useState(0);
   const [activeOrder, setActiveOrder] = useState<PotionOrder>(() =>
-    createPotionOrder(1, 1, 0),
+    createPotionOrder(1, 1),
   );
   const [floatingSparks, setFloatingSparks] = useState<FloatingSpark[]>([]);
   const [goldenIngredient, setGoldenIngredient] = useState<GoldenIngredient | null>(
@@ -172,10 +169,7 @@ export default function Game1({ onBack }: Game1Props) {
     () => Math.round(autoBrew * brewMultiplier),
     [autoBrew, brewMultiplier],
   );
-  const orderProgressValue = useMemo(
-    () => Math.max(totalBrewed - activeOrder.startBrewed, 0),
-    [activeOrder.startBrewed, totalBrewed],
-  );
+  const orderProgressValue = useMemo(() => activeOrderProgress, [activeOrderProgress]);
   const orderProgress = useMemo(
     () => Math.min((orderProgressValue / activeOrder.target) * 100, 100),
     [activeOrder.target, orderProgressValue],
@@ -251,7 +245,7 @@ export default function Game1({ onBack }: Game1Props) {
 
         return updatedEssence;
       });
-      setTotalBrewed((previousBrewed) => previousBrewed + idleValue);
+      setActiveOrderProgress((previousProgress) => previousProgress + idleValue);
       setTotalReputation(
         (previousReputation) =>
           previousReputation + Math.max(1, Math.round(idleValue * 0.35)),
@@ -401,7 +395,7 @@ export default function Game1({ onBack }: Game1Props) {
     });
 
     if (options?.trackBrewed !== false) {
-      setTotalBrewed((previousBrewed) => previousBrewed + nextAmount);
+      setActiveOrderProgress((previousProgress) => previousProgress + nextAmount);
     }
 
     setTotalReputation(
@@ -459,7 +453,6 @@ export default function Game1({ onBack }: Game1Props) {
     const nextOrder = createPotionOrder(
       activeOrder.id + 1,
       nextReputationLevel,
-      totalBrewed,
     );
 
     setEssence((previousEssence) => {
@@ -475,6 +468,7 @@ export default function Game1({ onBack }: Game1Props) {
       (previousReputation) => previousReputation + activeOrder.reputationReward,
     );
     setCompletedOrders((previousCompletedOrders) => previousCompletedOrders + 1);
+    setActiveOrderProgress(0);
     setActiveOrder(nextOrder);
     addSpark(
       `Order +${formatNumber(activeOrder.reward)}`,
