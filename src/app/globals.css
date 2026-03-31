@@ -406,6 +406,122 @@ a {
   }
 }
 
+@keyframes cardPan {
+  0%,
+  100% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.04) translate3d(1.5%, -1.5%, 0);
+  }
+}
+
+@keyframes bubbleRise {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.75);
+  }
+  25% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px) scale(1.05);
+  }
+}
+
+@keyframes mistWave {
+  0%,
+  100% {
+    transform: translateX(-2%) translateY(0);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateX(2%) translateY(-1.5%);
+    opacity: 1;
+  }
+}
+
+@keyframes goldenPop {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow:
+      0 0 18px rgba(250, 204, 21, 0.45),
+      0 0 34px rgba(251, 146, 60, 0.28);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.08);
+    box-shadow:
+      0 0 26px rgba(250, 204, 21, 0.62),
+      0 0 46px rgba(251, 146, 60, 0.38);
+  }
+}
+
+@keyframes neonPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes gridSweep {
+  0% {
+    background-position:
+      0 0,
+      0 0;
+  }
+  100% {
+    background-position:
+      0 140px,
+      180px 0;
+  }
+}
+
+@keyframes warningBlink {
+  0%,
+  100% {
+    opacity: 0.42;
+    box-shadow:
+      inset 0 0 0 1px rgba(244, 114, 182, 0.22),
+      0 0 14px rgba(244, 114, 182, 0.08);
+  }
+  50% {
+    opacity: 1;
+    box-shadow:
+      inset 0 0 0 1px rgba(244, 114, 182, 0.55),
+      0 0 28px rgba(244, 114, 182, 0.24);
+  }
+}
+
+@keyframes pickupPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.08);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 26px rgba(255, 255, 255, 0.18);
+  }
+}
+
+@keyframes muzzleFlash {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.6);
+  }
+}
+
 .animate-float-point {
   animation: floatPoint 1.2s ease-out forwards;
 }
@@ -502,6 +618,209 @@ a {
   animation: bossImpact 0.78s ease-out forwards;
 }
 
+.animate-card-pan {
+  animation: cardPan 7.5s ease-in-out infinite;
+}
+
+.alchemy-preview-orb {
+  animation: softFloat 3.2s ease-in-out infinite;
+}
+
+.alchemy-bubble {
+  animation: bubbleRise 2.8s ease-in-out infinite;
+}
+
+.alchemy-mist {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(168, 85, 247, 0.14), transparent 28%),
+    radial-gradient(circle at 80% 30%, rgba(52, 211, 153, 0.12), transparent 22%),
+    radial-gradient(circle at 50% 90%, rgba(251, 191, 36, 0.08), transparent 30%);
+  animation: mistWave 12s ease-in-out infinite;
+}
+
+.alchemy-progress {
+  box-shadow: 0 0 24px rgba(168, 85, 247, 0.35);
+}
+
+.alchemy-cauldron {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 24px 56px rgba(25, 10, 44, 0.45);
+}
+
+.alchemy-cauldron::after {
+  position: absolute;
+  inset: 12% 18%;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle at top,
+    rgba(255, 255, 255, 0.12),
+    transparent 55%
+  );
+  content: "";
+}
+
+.alchemy-core {
+  animation: neonPulse 3.6s ease-in-out infinite;
+}
+
+.golden-ingredient {
+  animation: goldenPop 1.7s ease-in-out infinite;
+}
+
+.neon-haze {
+  background-image:
+    radial-gradient(circle at top, rgba(34, 211, 238, 0.12), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(244, 114, 182, 0.1), transparent 30%);
+}
+
+.neon-space {
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.24) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 72% 36%, rgba(34, 211, 238, 0.22) 0 1.2px, transparent 2px),
+    linear-gradient(180deg, rgba(6, 11, 27, 0.94), rgba(3, 7, 19, 0.98));
+  background-size:
+    140px 140px,
+    220px 220px,
+    100% 100%;
+  animation: spaceDrift 8.2s linear infinite;
+}
+
+.neon-grid {
+  background-image:
+    linear-gradient(rgba(34, 211, 238, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.08) 1px, transparent 1px);
+  background-size:
+    34px 34px,
+    34px 34px;
+  animation: gridSweep 7.8s linear infinite;
+}
+
+.neon-warning {
+  animation: warningBlink 1.2s ease-in-out infinite;
+}
+
+.neon-ship {
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  border-radius: 1.2rem;
+  background: linear-gradient(
+    180deg,
+    rgba(125, 211, 252, 0.95),
+    rgba(59, 130, 246, 0.78) 58%,
+    rgba(168, 85, 247, 0.68)
+  );
+  clip-path: polygon(50% 0%, 100% 62%, 66% 100%, 34% 100%, 0% 62%);
+  box-shadow:
+    0 0 24px rgba(34, 211, 238, 0.32),
+    inset 0 0 18px rgba(255, 255, 255, 0.12);
+}
+
+.neon-thruster {
+  width: 5px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(165, 243, 252, 0.95), rgba(59, 130, 246, 0.45));
+  box-shadow: 0 0 18px rgba(103, 232, 249, 0.88);
+  transform: translateX(-50%);
+  animation: thrusterFlicker 0.34s ease-in-out infinite;
+}
+
+.neon-projectile-player {
+  width: 5px;
+  height: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(34, 211, 238, 0.55));
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.88);
+  animation: projectileGlow 0.45s ease-in-out infinite;
+}
+
+.neon-projectile-enemy {
+  width: 6px;
+  height: 18px;
+  background: linear-gradient(180deg, rgba(251, 113, 133, 0.95), rgba(236, 72, 153, 0.5));
+  box-shadow: 0 0 14px rgba(244, 114, 182, 0.68);
+  animation: projectileGlow 0.45s ease-in-out infinite;
+}
+
+.neon-pickup {
+  animation: pickupPulse 1.6s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.12);
+}
+
+.enemy-drone,
+.enemy-zigzag,
+.enemy-tank,
+.enemy-boss {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: enemyBob 2.2s ease-in-out infinite;
+}
+
+.enemy-drone {
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  border-radius: 1rem;
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.28), rgba(59, 130, 246, 0.2));
+  clip-path: polygon(50% 0%, 100% 46%, 78% 100%, 22% 100%, 0% 46%);
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.18);
+}
+
+.enemy-zigzag {
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  border-radius: 1rem;
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.28), rgba(244, 114, 182, 0.18));
+  clip-path: polygon(16% 0%, 100% 0%, 84% 100%, 0% 100%);
+  box-shadow: 0 0 18px rgba(139, 92, 246, 0.18);
+}
+
+.enemy-tank {
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  border-radius: 1rem;
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.26), rgba(249, 115, 22, 0.2));
+  clip-path: polygon(20% 0%, 80% 0%, 100% 25%, 100% 100%, 0% 100%, 0% 25%);
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.16);
+}
+
+.enemy-boss {
+  border: 1px solid rgba(244, 114, 182, 0.58);
+  border-radius: 1.4rem;
+  background: linear-gradient(
+    180deg,
+    rgba(251, 113, 133, 0.34),
+    rgba(168, 85, 247, 0.28) 55%,
+    rgba(59, 130, 246, 0.16)
+  );
+  clip-path: polygon(50% 0%, 100% 20%, 92% 80%, 72% 100%, 28% 100%, 8% 80%, 0% 20%);
+  box-shadow:
+    0 0 28px rgba(244, 114, 182, 0.22),
+    inset 0 0 24px rgba(255, 255, 255, 0.06);
+}
+
+.combat-effect-muzzle {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 2px solid rgba(165, 243, 252, 0.85);
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.32);
+  animation: muzzleFlash 0.26s ease-out forwards;
+}
+
+.combat-effect-pickup {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 2px solid rgba(251, 191, 36, 0.78);
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.34);
+  animation: impactRing 0.42s ease-out forwards;
+}
+
+.combat-effect-warning {
+  width: 86px;
+  height: 86px;
+  border-radius: 999px;
+  border: 3px dashed rgba(244, 114, 182, 0.78);
+  animation: bossImpact 0.9s ease-out forwards;
+}
+
 .toast-progress-success {
   background: #22c55e !important;
 }
@@ -536,14 +855,26 @@ a {
   .animate-breathe,
   .animate-progress-pulse,
   .animate-board-pulse,
+  .animate-card-pan,
   .animate-icon-hover,
   .animate-enemy-bob,
   .animate-thruster-flicker,
   .animate-projectile-glow,
+  .alchemy-preview-orb,
+  .alchemy-bubble,
+  .alchemy-mist,
+  .golden-ingredient,
+  .neon-space,
+  .neon-grid,
+  .neon-warning,
+  .neon-pickup,
   .booster-drop,
   .combat-effect-hit,
   .combat-effect-burst,
   .combat-effect-boss,
+  .combat-effect-muzzle,
+  .combat-effect-pickup,
+  .combat-effect-warning,
   .shooter-space {
     animation: none !important;
   }
