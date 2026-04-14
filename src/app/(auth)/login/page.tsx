@@ -416,7 +416,7 @@ export default function LoginPage() {
           </div>
         </section>
 
-        <section className="relative hidden overflow-hidden lg:block">
+        <section className="relative hidden min-h-screen overflow-hidden lg:block lg:h-screen">
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{
@@ -435,7 +435,7 @@ export default function LoginPage() {
             }}
           />
 
-          <div className="relative z-10 flex h-full flex-col justify-between px-10 py-9 xl:px-12 xl:py-10">
+          <div className="relative z-10 grid h-full grid-rows-[auto_minmax(0,1fr)] gap-10 px-10 py-9 xl:px-12 xl:py-10">
             <div className="flex justify-end">
               <div className="w-full max-w-[320px] rounded-[28px] border border-white/14 bg-white/10 px-5 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.2)] backdrop-blur-md">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/72">
@@ -450,48 +450,52 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="max-w-[860px]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/70">
-                Enterprise Cargo Operations Portal
-              </p>
-              <h2 className="mt-5 max-w-[760px] font-[family:var(--font-heading)] text-[clamp(3rem,4.4vw,5rem)] font-black leading-[0.94] tracking-[-0.08em] text-white">
-                Tracking kargo udara yang cepat, padat, dan tetap tenang dibaca.
-              </h2>
-              <p className="mt-6 max-w-[740px] text-[1.02rem] leading-8 text-white/80">
-                SkyHub membantu operator memantau AWB, flight board, manifest, dan audit log dalam satu
-                sistem yang stabil, rapi, dan siap digunakan sepanjang shift operasional.
-              </p>
+            <div className="flex min-h-0 items-center">
+              <div className="grid w-full max-w-[980px] gap-8">
+                <div className="max-w-[780px]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/70">
+                    Enterprise Cargo Operations Portal
+                  </p>
+                  <h2 className="mt-5 max-w-[760px] font-[family:var(--font-heading)] text-[clamp(3rem,4.4vw,5rem)] font-black leading-[0.94] tracking-[-0.08em] text-white">
+                    Tracking kargo udara yang cepat, padat, dan tetap tenang dibaca.
+                  </h2>
+                  <p className="mt-6 max-w-[740px] text-[1.02rem] leading-8 text-white/80">
+                    SkyHub membantu operator memantau AWB, flight board, manifest, dan audit log dalam
+                    satu sistem yang stabil, rapi, dan siap digunakan sepanjang shift operasional.
+                  </p>
+                </div>
 
-              <div className="mt-10 grid gap-4 xl:grid-cols-3">
-                {featureCards.map(({ icon: Icon, title, copy }) => (
-                  <div
-                    key={title}
-                    className="rounded-[28px] border border-white/14 bg-white/10 px-5 py-5 shadow-[0_20px_44px_rgba(15,23,42,0.16)] backdrop-blur-md"
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-white/12 text-white">
-                      <Icon size={20} />
+                <div className="grid max-w-[960px] gap-4 xl:grid-cols-3">
+                  {featureCards.map(({ icon: Icon, title, copy }) => (
+                    <div
+                      key={title}
+                      className="rounded-[28px] border border-white/14 bg-white/10 px-5 py-5 shadow-[0_20px_44px_rgba(15,23,42,0.16)] backdrop-blur-md"
+                    >
+                      <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-white/12 text-white">
+                        <Icon size={20} />
+                      </div>
+                      <h3 className="mt-5 font-[family:var(--font-heading)] text-[1.55rem] font-extrabold tracking-[-0.05em] text-white">
+                        {title}
+                      </h3>
+                      <p className="mt-3 text-sm leading-7 text-white/76">{copy}</p>
                     </div>
-                    <h3 className="mt-5 font-[family:var(--font-heading)] text-[1.55rem] font-extrabold tracking-[-0.05em] text-white">
-                      {title}
-                    </h3>
-                    <p className="mt-3 text-sm leading-7 text-white/76">{copy}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              <div className="mt-6 max-w-[780px] rounded-[30px] border border-white/14 bg-white/10 px-6 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.14)] backdrop-blur-md">
-                <div className="flex items-start gap-4">
-                  <span className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-white/12 text-white">
-                    <BellRing size={18} />
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
-                      Operator Note
-                    </p>
-                    <p className="mt-2 text-sm leading-7 text-white/80">
-                      Tampilan dibuat dengan fokus pada keterbacaan cepat, struktur yang stabil, dan
-                      navigasi yang mudah dipahami untuk kebutuhan operasional harian.
-                    </p>
+                <div className="max-w-[780px] rounded-[30px] border border-white/14 bg-white/10 px-6 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.14)] backdrop-blur-md">
+                  <div className="flex items-start gap-4">
+                    <span className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-white/12 text-white">
+                      <BellRing size={18} />
+                    </span>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
+                        Operator Note
+                      </p>
+                      <p className="mt-2 text-sm leading-7 text-white/80">
+                        Tampilan dibuat dengan fokus pada keterbacaan cepat, struktur yang stabil, dan
+                        navigasi yang mudah dipahami untuk kebutuhan operasional harian.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
