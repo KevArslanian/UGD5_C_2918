@@ -589,6 +589,19 @@ textarea {
   max-width: 62rem;
 }
 
+.login-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.login-company-teaser-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
 .login-company-grid {
   display: grid;
   gap: 0.85rem;
@@ -636,6 +649,26 @@ input[type="checkbox"] {
 .dashboard-alert-scroll,
 .dashboard-activity-scroll {
   min-height: 0;
+}
+
+.about-shell {
+  min-height: 100vh;
+  padding: 1.25rem;
+}
+
+.about-frame {
+  margin: 0 auto;
+  display: flex;
+  max-width: 1440px;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.about-hero-grid,
+.about-content-grid,
+.about-contact-grid {
+  display: grid;
+  gap: 1rem;
 }
 
 @media (min-width: 1280px) {
@@ -716,7 +749,32 @@ input[type="checkbox"] {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .login-company-teaser-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .login-company-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .about-shell {
+    padding: 1.75rem;
+  }
+
+  .about-frame {
+    gap: 1.5rem;
+  }
+
+  .about-hero-grid {
+    grid-template-columns: minmax(0, 1.25fr) 320px;
+    align-items: start;
+  }
+
+  .about-content-grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.75fr);
+  }
+
+  .about-contact-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -745,6 +803,7 @@ input[type="checkbox"] {
   }
 
   .login-feature-grid,
+  .login-company-teaser-grid,
   .login-company-grid {
     grid-template-columns: minmax(0, 1fr);
   }

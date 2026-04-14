@@ -1,37 +1,25 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  AtSign,
-  BellRing,
-  Building2,
-  Clock3,
   Eye,
   EyeOff,
-  Globe2,
-  Link2,
+  Info,
   Loader2,
-  Mail,
-  MapPin,
-  MessageCircleMore,
-  Phone,
   PlaneTakeoff,
   Radar,
   ScrollText,
-  ShieldCheck,
-  Smartphone,
-  type LucideIcon,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
-
-type ContactEntry = {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-  href?: string;
-};
+import {
+  COMPANY_ABOUT_COPY,
+  COMPANY_CONTACT_TEASER,
+  COMPANY_HERO_COPY,
+  COMPANY_HERO_HEADLINE,
+} from "@/lib/company-profile";
 
 const featureCards = [
   {
@@ -48,83 +36,6 @@ const featureCards = [
     icon: ScrollText,
     title: "Audit & Alerts",
     copy: "Lihat log aktivitas, notifikasi, dan exception state untuk kebutuhan pengawasan.",
-  },
-] as const;
-
-const contactItems: ContactEntry[] = [
-  {
-    icon: Building2,
-    label: "Office",
-    value: "SkyHub Operations Center",
-  },
-  {
-    icon: MapPin,
-    label: "Address",
-    value: "Jl. Kargo Internasional No. 12, Area Logistik Bandara, Jakarta 15126, Indonesia",
-  },
-  {
-    icon: Mail,
-    label: "General Email",
-    value: "info@skyhub.co",
-    href: "mailto:info@skyhub.co",
-  },
-  {
-    icon: Mail,
-    label: "Operations Email",
-    value: "ops@skyhub.co",
-    href: "mailto:ops@skyhub.co",
-  },
-  {
-    icon: Mail,
-    label: "Support Email",
-    value: "support@skyhub.co",
-    href: "mailto:support@skyhub.co",
-  },
-  {
-    icon: Phone,
-    label: "Phone",
-    value: "+62 21 500 780",
-    href: "tel:+6221500780",
-  },
-  {
-    icon: Smartphone,
-    label: "Mobile Ops",
-    value: "+62 812 9000 1122",
-    href: "tel:+6281290001122",
-  },
-  {
-    icon: MessageCircleMore,
-    label: "WhatsApp Business",
-    value: "+62 812 9000 3344",
-    href: "https://wa.me/6281290003344",
-  },
-  {
-    icon: Globe2,
-    label: "Website",
-    value: "www.skyhub.co",
-    href: "https://www.skyhub.co",
-  },
-  {
-    icon: Clock3,
-    label: "Working Hours",
-    value: "Senin sampai Jumat, 08.00 sampai 20.00 WIB",
-  },
-  {
-    icon: ShieldCheck,
-    label: "Emergency Ops Line",
-    value: "24 jam monitoring support",
-  },
-  {
-    icon: AtSign,
-    label: "Instagram",
-    value: "@skyhub.official",
-    href: "https://instagram.com/skyhub.official",
-  },
-  {
-    icon: Link2,
-    label: "LinkedIn",
-    value: "SkyHub Cargo Systems",
-    href: "https://www.linkedin.com",
   },
 ] as const;
 
@@ -309,7 +220,15 @@ export default function LoginPage() {
 
           <div className="login-hero-scroll ops-scrollbar">
             <div className="login-hero-inner">
-              <div className="flex justify-end">
+              <div className="login-hero-actions">
+                <Link
+                  href="/about-us"
+                  className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded-[24px] border border-white/14 bg-white/10 px-5 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)] backdrop-blur-md transition hover:-translate-y-[1px] hover:bg-white/12"
+                >
+                  <Info size={18} />
+                  About Us
+                </Link>
+
                 <div className="w-full max-w-[320px] rounded-[28px] border border-white/14 bg-white/10 px-5 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.2)] backdrop-blur-md">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/72">
                     Shift Status
@@ -328,12 +247,9 @@ export default function LoginPage() {
                   Enterprise Cargo Operations Portal
                 </p>
                 <h2 className="login-hero-title mt-5 font-[family:var(--font-heading)] font-black text-white">
-                  Tracking kargo udara yang cepat, padat, dan tetap tenang dibaca.
+                  {COMPANY_HERO_HEADLINE}
                 </h2>
-                <p className="mt-6 max-w-[760px] text-[1rem] leading-8 text-white/82">
-                  SkyHub membantu operator memantau AWB, flight board, manifest, dan audit log dalam satu
-                  sistem yang stabil, rapi, dan siap digunakan sepanjang shift operasional.
-                </p>
+                <p className="mt-6 max-w-[760px] text-[1rem] leading-8 text-white/82">{COMPANY_HERO_COPY}</p>
               </div>
 
               <div className="login-feature-grid">
@@ -355,77 +271,71 @@ export default function LoginPage() {
 
               <div className="login-company-panel rounded-[32px] border border-white/14 bg-white/10 px-6 py-6 shadow-[0_18px_40px_rgba(15,23,42,0.14)] backdrop-blur-md">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/68">
-                    Company Profile
-                  </p>
-                  <p className="text-sm text-white/70">SkyHub Cargo Ops Control</p>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/68">
+                      Company Profile
+                    </p>
+                    <h3 className="mt-3 font-[family:var(--font-heading)] text-[1.55rem] font-black tracking-[-0.05em] text-white">
+                      SkyHub Cargo Systems
+                    </h3>
+                  </div>
+
+                  <Link
+                    href="/about-us"
+                    className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[18px] border border-white/16 bg-white/10 px-4 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:bg-white/12"
+                  >
+                    Lihat profil lengkap
+                    <ArrowRight size={16} />
+                  </Link>
                 </div>
 
-                <div className="mt-6 border-t border-white/12 pt-6">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/66">
-                    About SkyHub
-                  </p>
-                  <p className="mt-3 max-w-[880px] text-sm leading-7 text-white/82">
-                    SkyHub menghadirkan sistem operasional cargo udara yang menyatukan monitoring
-                    shipment, manifest, flight board, dan audit log dalam antarmuka yang formal, stabil,
-                    dan mudah dibaca untuk kebutuhan harian control room.
-                  </p>
-                </div>
+                <p className="mt-5 max-w-[840px] text-sm leading-7 text-white/82">{COMPANY_ABOUT_COPY}</p>
 
-                <div className="mt-6 border-t border-white/12 pt-6">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/66">
-                    Contact Information
-                  </p>
-                  <div className="login-company-grid mt-4">
-                    {contactItems.map(({ icon: Icon, label, value, href }) => {
-                      const itemContent = (
-                        <div className="login-contact-item rounded-[22px] border border-white/12 bg-white/8 px-4 py-4">
-                          <div className="flex items-start gap-3">
-                            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-white/12 text-white">
-                              <Icon size={18} />
-                            </span>
-                            <div className="min-w-0">
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/64">
-                                {label}
-                              </p>
-                              <p className="mt-2 text-sm leading-6 text-white/84">{value}</p>
-                            </div>
+                <div className="login-company-teaser-grid mt-6">
+                  {COMPANY_CONTACT_TEASER.map(({ icon: Icon, label, value, href }) => {
+                    const content = (
+                      <div className="rounded-[22px] border border-white/12 bg-white/8 px-4 py-4 transition hover:-translate-y-[1px] hover:bg-white/12">
+                        <div className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-white/12 text-white">
+                            <Icon size={18} />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/64">
+                              {label}
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-white/84">{value}</p>
                           </div>
                         </div>
-                      );
+                      </div>
+                    );
 
-                      return href ? (
-                        <a
-                          key={label}
-                          href={href}
-                          target={href.startsWith("http") ? "_blank" : undefined}
-                          rel={href.startsWith("http") ? "noreferrer" : undefined}
-                          className="block"
-                        >
-                          {itemContent}
-                        </a>
-                      ) : (
-                        <div key={label}>{itemContent}</div>
-                      );
-                    })}
-                  </div>
+                    return href ? (
+                      <a
+                        key={label}
+                        href={href}
+                        target={href.startsWith("http") ? "_blank" : undefined}
+                        rel={href.startsWith("http") ? "noreferrer" : undefined}
+                      >
+                        {content}
+                      </a>
+                    ) : (
+                      <div key={label}>{content}</div>
+                    );
+                  })}
                 </div>
 
-                <div className="mt-6 border-t border-white/12 pt-6">
-                  <div className="flex items-start gap-4">
-                    <span className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-white/12 text-white">
-                      <BellRing size={18} />
-                    </span>
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/66">
-                        Operator Note
-                      </p>
-                      <p className="mt-3 text-sm leading-7 text-white/82">
-                        Tampilan dibuat dengan fokus pada keterbacaan cepat, struktur yang stabil, dan
-                        navigasi yang mudah dipahami untuk kebutuhan operasional harian.
-                      </p>
-                    </div>
-                  </div>
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/12 pt-5">
+                  <p className="max-w-[620px] text-sm leading-7 text-white/76">
+                    Company profile lengkap, layanan, coverage, dan direktori contact tersedia di halaman terpisah
+                    agar panel login tetap ringkas dan fokus pada akses operasional.
+                  </p>
+                  <Link
+                    href="/about-us"
+                    className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[18px] border border-white/16 bg-white/10 px-4 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:bg-white/12"
+                  >
+                    Buka About Us
+                    <ArrowRight size={16} />
+                  </Link>
                 </div>
               </div>
             </div>
