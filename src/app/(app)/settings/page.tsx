@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { BellRing, ChevronRight, Monitor, PanelLeftOpen, Plus, UserCircle2, Users2 } from "lucide-react";
+import { BellRing, Check, ChevronRight, Monitor, PanelLeftOpen, PencilLine, Plus, UserCircle2, Users2, X } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
@@ -70,6 +70,27 @@ const rolePillClasses: Record<SettingsPayload["profile"]["role"], string> = {
     "border border-[color:var(--tone-warning-soft)] bg-[color:var(--tone-warning-soft)] text-[color:var(--tone-warning)]",
 };
 
+const userStatusLabels: Record<SettingsPayload["users"][number]["status"], string> = {
+  active: "Active",
+  invited: "Invited",
+  disabled: "Disabled",
+};
+
+const roleDefinitionCards = [
+  {
+    title: "Admin",
+    copy: "Akses penuh, manajemen user, semua settings",
+  },
+  {
+    title: "Operator",
+    copy: "CRUD shipment, tracking AWB, handling cargo",
+  },
+  {
+    title: "Supervisor",
+    copy: "Monitoring, approval manifest, eskalasi",
+  },
+] as const;
+
 type PreferenceToggleCardProps = {
   title: string;
   copy: string;
@@ -132,6 +153,13 @@ export default function SettingsPage() {
   const [inviteForm, setInviteForm] = useState({ name: "", email: "", role: "operator", station: "SOQ" });
   const [draft, setDraft] = useState(() => toDraft(null));
   const [openGroupId, setOpenGroupId] = useState<(typeof tabGroups)[number]["id"]>("account");
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editingUserDraft, setEditingUserDraft] = useState<{
+    role: SettingsPayload["users"][number]["role"];
+    status: SettingsPayload["users"][number]["status"];
+    station: string;
+  } | null>(null);
 
   useEffect(() => {
     fetch("/api/settings", { cache: "no-store" })
@@ -174,6 +202,7 @@ export default function SettingsPage() {
     const payload = (await response.json()) as { user: SettingsPayload["users"][number] };
     setData((current) => (current ? { ...current, users: [...current.users, payload.user] } : current));
     setInviteForm({ name: "", email: "", role: "operator", station: "SOQ" });
+    setShowInviteForm(false);
   }
 
   async function updateUser(userId: string, patch: Partial<SettingsPayload["users"][number]>) {
@@ -192,6 +221,24 @@ export default function SettingsPage() {
           }
         : current,
     );
+    return payload.user;
+  }
+
+  function startEditingUser(user: SettingsPayload["users"][number]) {
+    setEditingUserId(user.id);
+    setEditingUserDraft({
+      role: user.role,
+      status: user.status,
+      station: user.station,
+    });
+  }
+
+  async function saveEditingUser() {
+    if (!editingUserId || !editingUserDraft) return;
+    const updatedUser = await updateUser(editingUserId, editingUserDraft);
+    if (!updatedUser) return;
+    setEditingUserId(null);
+    setEditingUserDraft(null);
   }
 
   return (
@@ -332,67 +379,219 @@ export default function SettingsPage() {
           ) : null}
 
           {activeTab === "User & Role" ? (
-            <div className="space-y-6">
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-[2rem] font-[family:var(--font-heading)] font-black tracking-[-0.04em] text-[color:var(--text-strong)]">
+                  User &amp; Role
+                </h2>
+                <p className="mt-1 text-base text-[color:var(--muted-fg)]">Tim, undangan, hak akses</p>
+              </div>
+
               <OpsPanel className="p-5">
-                <SectionHeader title="Invite User" subtitle="Tambah operator, supervisor, atau admin baru ke sistem." />
-                <div className="mt-5 grid gap-4 lg:grid-cols-5">
-                  <input className="input-field lg:col-span-1" placeholder="Nama" value={inviteForm.name} onChange={(event) => setInviteForm((current) => ({ ...current, name: event.target.value }))} />
-                  <input className="input-field lg:col-span-2" placeholder="Email" value={inviteForm.email} onChange={(event) => setInviteForm((current) => ({ ...current, email: event.target.value }))} />
-                  <select className="select-field" value={inviteForm.role} onChange={(event) => setInviteForm((current) => ({ ...current, role: event.target.value }))}>
-                    <option value="operator">Operator</option>
-                    <option value="supervisor">Supervisor</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                  <div className="flex gap-3">
-                    <input className="input-field" placeholder="Station" value={inviteForm.station} onChange={(event) => setInviteForm((current) => ({ ...current, station: event.target.value }))} />
+                <SectionHeader
+                  title="Anggota Tim"
+                  subtitle="Operator aktif dan penempatan stasiun"
+                  action={
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => setShowInviteForm((current) => !current)}
+                    >
+                      <Plus size={16} />
+                      {showInviteForm ? "Tutup" : "Undang User"}
+                    </button>
+                  }
+                />
+
+                {showInviteForm ? (
+                  <div className="mt-5 grid gap-4 rounded-[24px] border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] p-4 lg:grid-cols-[1.1fr_1.5fr_0.9fr_0.8fr_auto]">
+                    <input
+                      className="input-field"
+                      placeholder="Nama"
+                      value={inviteForm.name}
+                      onChange={(event) => setInviteForm((current) => ({ ...current, name: event.target.value }))}
+                    />
+                    <input
+                      className="input-field"
+                      placeholder="Email"
+                      value={inviteForm.email}
+                      onChange={(event) => setInviteForm((current) => ({ ...current, email: event.target.value }))}
+                    />
+                    <select
+                      className="select-field"
+                      value={inviteForm.role}
+                      onChange={(event) => setInviteForm((current) => ({ ...current, role: event.target.value }))}
+                    >
+                      <option value="operator">Operator</option>
+                      <option value="supervisor">Supervisor</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    <select
+                      className="select-field"
+                      value={inviteForm.station}
+                      onChange={(event) => setInviteForm((current) => ({ ...current, station: event.target.value }))}
+                    >
+                      {stationOptions.map((station) => (
+                        <option key={station} value={station}>
+                          {station}
+                        </option>
+                      ))}
+                    </select>
                     <button type="button" className="btn btn-primary" onClick={inviteUser}>
                       <Plus size={16} />
-                      Invite
+                      Kirim
                     </button>
                   </div>
+                ) : null}
+
+                <div className="mt-5 overflow-hidden rounded-[24px] border border-[color:var(--border-soft)]">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Nama</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Stasiun</th>
+                        <th>Status</th>
+                        <th className="text-right"> </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(data?.users ?? []).map((user) => {
+                        const isEditing = editingUserId === user.id && editingUserDraft;
+
+                        return (
+                          <tr key={user.id}>
+                            <td>
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-primary-soft)] text-sm font-bold text-[color:var(--brand-primary)]">
+                                  {getInitials(user.name)}
+                                </div>
+                                <p className="font-semibold text-[color:var(--text-strong)]">{user.name}</p>
+                              </div>
+                            </td>
+                            <td>{user.email}</td>
+                            <td>
+                              {isEditing ? (
+                                <select
+                                  className="select-field h-10"
+                                  value={editingUserDraft.role}
+                                  onChange={(event) =>
+                                    setEditingUserDraft((current) =>
+                                      current
+                                        ? {
+                                            ...current,
+                                            role: event.target.value as SettingsPayload["users"][number]["role"],
+                                          }
+                                        : current,
+                                    )
+                                  }
+                                >
+                                  <option value="operator">Operator</option>
+                                  <option value="supervisor">Supervisor</option>
+                                  <option value="admin">Admin</option>
+                                </select>
+                              ) : (
+                                <span className="font-medium text-[color:var(--text-strong)]">{ROLE_LABELS[user.role]}</span>
+                              )}
+                            </td>
+                            <td>
+                              {isEditing ? (
+                                <select
+                                  className="select-field h-10"
+                                  value={editingUserDraft.station}
+                                  onChange={(event) =>
+                                    setEditingUserDraft((current) =>
+                                      current ? { ...current, station: event.target.value } : current,
+                                    )
+                                  }
+                                >
+                                  {stationOptions.map((station) => (
+                                    <option key={station} value={station}>
+                                      {station}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <span className="font-semibold text-[color:var(--brand-primary)]">{user.station}</span>
+                              )}
+                            </td>
+                            <td>
+                              {isEditing ? (
+                                <select
+                                  className="select-field h-10"
+                                  value={editingUserDraft.status}
+                                  onChange={(event) =>
+                                    setEditingUserDraft((current) =>
+                                      current
+                                        ? {
+                                            ...current,
+                                            status: event.target.value as SettingsPayload["users"][number]["status"],
+                                          }
+                                        : current,
+                                    )
+                                  }
+                                >
+                                  <option value="active">Active</option>
+                                  <option value="invited">Invited</option>
+                                  <option value="disabled">Disabled</option>
+                                </select>
+                              ) : (
+                                <StatusBadge value={user.status} label={userStatusLabels[user.status]} className="normal-case tracking-normal" />
+                              )}
+                            </td>
+                            <td className="text-right">
+                              {isEditing ? (
+                                <div className="flex justify-end gap-2">
+                                  <button type="button" className="btn btn-primary h-10 px-4" onClick={saveEditingUser}>
+                                    <Check size={15} />
+                                    Simpan
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary h-10 px-4"
+                                    onClick={() => {
+                                      setEditingUserId(null);
+                                      setEditingUserDraft(null);
+                                    }}
+                                  >
+                                    <X size={15} />
+                                    Batal
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary h-10 px-4"
+                                  onClick={() => startEditingUser(user)}
+                                >
+                                  <PencilLine size={15} />
+                                  Edit
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </OpsPanel>
 
               <OpsPanel className="p-5">
-                <SectionHeader title="User Access" subtitle="Ubah role, status, dan station user yang sudah terdaftar." />
-                <div className="mt-5 table-shell">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>User</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Station</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(data?.users ?? []).map((user) => (
-                        <tr key={user.id}>
-                          <td className="font-semibold text-[color:var(--text-strong)]">{user.name}</td>
-                          <td>{user.email}</td>
-                          <td>
-                            <select className="select-field h-10" value={user.role} onChange={(event) => updateUser(user.id, { role: event.target.value as SettingsPayload["users"][number]["role"] })}>
-                              <option value="operator">Operator</option>
-                              <option value="supervisor">Supervisor</option>
-                              <option value="admin">Admin</option>
-                            </select>
-                          </td>
-                          <td className="space-y-2">
-                            <StatusBadge value={user.status} label={user.status} />
-                            <select className="select-field h-10" value={user.status} onChange={(event) => updateUser(user.id, { status: event.target.value as SettingsPayload["users"][number]["status"] })}>
-                              <option value="active">Active</option>
-                              <option value="invited">Invited</option>
-                              <option value="disabled">Disabled</option>
-                            </select>
-                          </td>
-                          <td>
-                            <input className="input-field h-10" value={user.station} onChange={(event) => updateUser(user.id, { station: event.target.value })} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <SectionHeader title="Definisi Role" subtitle="Hak akses untuk setiap role" />
+                <div className="mt-5 grid gap-4 xl:grid-cols-3">
+                  {roleDefinitionCards.map((card) => (
+                    <div
+                      key={card.title}
+                      className="rounded-[20px] border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] p-4"
+                    >
+                      <h3 className="font-[family:var(--font-heading)] text-[1.25rem] font-extrabold tracking-[-0.03em] text-[color:var(--text-strong)]">
+                        {card.title}
+                      </h3>
+                      <p className="mt-2 text-base leading-7 text-[color:var(--muted-fg)]">{card.copy}</p>
+                    </div>
+                  ))}
                 </div>
               </OpsPanel>
             </div>
