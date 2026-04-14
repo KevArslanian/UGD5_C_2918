@@ -142,6 +142,18 @@ export function AppShell({ user, settings, notifications, children }: ShellProps
   }, [shellSettings.sidebarCollapsed]);
 
   useEffect(() => {
+    function handleSettingsPreview(event: Event) {
+      const customEvent = event as CustomEvent<Partial<ShellProps["settings"]>>;
+      const nextSettings = customEvent.detail;
+      if (!nextSettings) return;
+
+      setShellSettings((current) => ({ ...current, ...nextSettings }));
+
+      if (nextSettings.theme) {
+        setTheme(nextSettings.theme);
+      }
+    }
+
     function handleExternalThemeChange(event: Event) {
       const customEvent = event as CustomEvent<"light" | "dark">;
       const nextTheme = customEvent.detail;
@@ -149,8 +161,42 @@ export function AppShell({ user, settings, notifications, children }: ShellProps
       setShellSettings((current) => ({ ...current, theme: nextTheme }));
     }
 
+    window.addEventListener("skyhub:settings-preview", handleSettingsPreview as EventListener);
     window.addEventListener("skyhub:theme-change", handleExternalThemeChange as EventListener);
-    return () => window.removeEventListener("skyhub:theme-change", handleExternalThemeChange as EventListener);
+    return () => {
+      window.removeEventListener("skyhub:settings-preview", handleSettingsPreview as EventListener);
+      window.removeEventListener("skyhub:theme-change", handleExternalThemeChange as EventListener);
+    };
+  }, [setTheme]);
+
+  useEffect(() => {
+    function handleNotificationPreview(event: Event) {
+      const customEvent = event as CustomEvent<{
+        title: string;
+        message: string;
+        type: string;
+        href?: string | null;
+      }>;
+
+      if (!customEvent.detail) return;
+
+      const previewItem = {
+        id: `preview-${Date.now()}`,
+        title: customEvent.detail.title,
+        message: customEvent.detail.message,
+        href: customEvent.detail.href ?? null,
+        type: customEvent.detail.type,
+        read: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      setNotificationItems((items) => [previewItem, ...items].slice(0, 8));
+      setNotificationOpen(true);
+    }
+
+    window.addEventListener("skyhub:notification-preview", handleNotificationPreview as EventListener);
+    return () =>
+      window.removeEventListener("skyhub:notification-preview", handleNotificationPreview as EventListener);
   }, []);
 
   useEffect(() => {

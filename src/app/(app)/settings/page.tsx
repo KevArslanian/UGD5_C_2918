@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { BellRing, Check, ChevronRight, Monitor, PanelLeftOpen, PencilLine, Plus, UserCircle2, Users2, X } from "lucide-react";
+import { BellRing, Check, ChevronRight, Mail, Monitor, PanelLeftOpen, PencilLine, Plus, TriangleAlert, UserCircle2, Users2, Volume2, X } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
@@ -135,6 +135,8 @@ function toDraft(data: SettingsPayload | null) {
   };
 }
 
+type SettingsDraft = ReturnType<typeof toDraft>;
+
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -142,6 +144,11 @@ function getInitials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
+}
+
+function clampRefreshInterval(value: number) {
+  if (!Number.isFinite(value)) return 5;
+  return Math.min(60, Math.max(5, value));
 }
 
 export default function SettingsPage() {
@@ -160,6 +167,11 @@ export default function SettingsPage() {
     status: SettingsPayload["users"][number]["status"];
     station: string;
   } | null>(null);
+  const [previewNotice, setPreviewNotice] = useState<{
+    title: string;
+    copy: string;
+    tone: "info" | "warning" | "success";
+  } | null>(null);
 
   useEffect(() => {
     fetch("/api/settings", { cache: "no-store" })
@@ -171,23 +183,171 @@ export default function SettingsPage() {
       .catch(() => undefined);
   }, []);
 
+  function emitSettingsPreview(patch: Partial<SettingsDraft>) {
+    window.dispatchEvent(new CustomEvent("skyhub:settings-preview", { detail: patch }));
+    if (patch.theme) {
+      window.dispatchEvent(new CustomEvent("skyhub:theme-change", { detail: patch.theme }));
+    }
+  }
+
+  function applyDraftPatch(
+    patch: Partial<SettingsDraft>,
+    notice?: {
+      title: string;
+      copy: string;
+      tone: "info" | "warning" | "success";
+    },
+  ) {
+    setDraft((current) => ({ ...current, ...patch }));
+    emitSettingsPreview(patch);
+
+    if (patch.theme) {
+      setTheme(patch.theme);
+    }
+
+    if (notice) {
+      setPreviewNotice(notice);
+    }
+  }
+
+  async function playAlertTone(kind: "cutoff" | "exception" | "sound" = "sound") {
+    const AudioContextCtor =
+      window.AudioContext ||
+      (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+    if (!AudioContextCtor) {
+      setPreviewNotice({
+        title: "Browser tidak mendukung audio preview",
+        copy: "Gunakan browser modern agar tes bunyi alarm bisa diputar langsung dari settings.",
+        tone: "warning",
+      });
+      return;
+    }
+
+    const context = new AudioContextCtor();
+    await context.resume();
+
+    const notes =
+      kind === "cutoff" ? [784, 988] : kind === "exception" ? [523, 392, 523] : [660, 880];
+    let start = context.currentTime;
+
+    notes.forEach((frequency) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+
+      oscillator.type = kind === "exception" ? "square" : "sine";
+      oscillator.frequency.setValueAtTime(frequency, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.12, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(start);
+      oscillator.stop(start + 0.24);
+
+      start += 0.18;
+    });
+
+    window.setTimeout(() => {
+      void context.close();
+    }, notes.length * 260);
+  }
+
+  async function triggerNotificationPreview(type: "cutoff" | "exception" | "sound" | "email") {
+    if (type === "cutoff") {
+      window.dispatchEvent(
+        new CustomEvent("skyhub:notification-preview", {
+          detail: {
+            title: "Tes cutoff mendekat",
+            message: "GA-714 akan menutup penerimaan kargo dalam 18 menit. Ini hanya preview dari settings.",
+            type: "warning",
+            href: "/flight-board",
+          },
+        }),
+      );
+
+      if (draft.soundAlert) {
+        await playAlertTone("cutoff");
+      }
+
+      setPreviewNotice({
+        title: "Cutoff alert dipicu",
+        copy: "Counter alert di topbar bertambah dan preview notifikasi cutoff dimunculkan.",
+        tone: "warning",
+      });
+      return;
+    }
+
+    if (type === "exception") {
+      window.dispatchEvent(
+        new CustomEvent("skyhub:notification-preview", {
+          detail: {
+            title: "Tes exception shipment",
+            message: "AWB 160-23456789 butuh validasi manual. Ini hanya preview dari settings.",
+            type: "error",
+            href: "/awb-tracking?awb=160-23456789",
+          },
+        }),
+      );
+
+      if (draft.soundAlert) {
+        await playAlertTone("exception");
+      }
+
+      setPreviewNotice({
+        title: "Exception alert dipicu",
+        copy: "Preview notifikasi exception muncul agar operator langsung tahu bentuk alert-nya.",
+        tone: "warning",
+      });
+      return;
+    }
+
+    if (type === "sound") {
+      await playAlertTone("sound");
+      setPreviewNotice({
+        title: "Tes bunyi alarm diputar",
+        copy: "Nada preview dipakai untuk memastikan toggle sound alert benar-benar bekerja di browser ini.",
+        tone: "success",
+      });
+      return;
+    }
+
+    setPreviewNotice({
+      title: "Preview email digest aktif",
+      copy: `Simulasi ringkasan harian ditujukan ke ${data?.profile.email ?? "operator aktif"} tanpa benar-benar mengirim email.`,
+      tone: "info",
+    });
+  }
+
   async function saveSettings() {
     setSaving(true);
     const nextDraft = { ...draft };
+    emitSettingsPreview(nextDraft);
     setTheme(nextDraft.theme);
-    window.dispatchEvent(new CustomEvent("skyhub:theme-change", { detail: nextDraft.theme }));
     const response = await fetch("/api/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(nextDraft),
     });
     if (!response.ok) {
+      setPreviewNotice({
+        title: "Pengaturan gagal disimpan",
+        copy: "Preview masih aktif di browser ini, tetapi perubahan belum tersimpan ke database.",
+        tone: "warning",
+      });
       setSaving(false);
       return;
     }
     const payload = (await response.json()) as SettingsPayload;
     setData(payload);
     setDraft(toDraft(payload));
+    emitSettingsPreview(toDraft(payload));
+    setPreviewNotice({
+      title: "Pengaturan tersimpan",
+      copy: "Semua perubahan sudah dipersist ke database dan akan tetap sama setelah refresh atau login ulang.",
+      tone: "success",
+    });
     router.refresh();
     setSaving(false);
   }
@@ -289,6 +449,7 @@ export default function SettingsPage() {
                           onClick={() => {
                             setOpenGroupId(group.id);
                             setActiveTab(tab.label);
+                            setPreviewNotice(null);
                           }}
                         >
                           <span className="flex items-center gap-3">
@@ -453,7 +614,7 @@ export default function SettingsPage() {
                         <th>Role</th>
                         <th>Stasiun</th>
                         <th>Status</th>
-                        <th className="text-right"> </th>
+                        <th className="text-right">Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -598,72 +759,269 @@ export default function SettingsPage() {
           ) : null}
 
           {activeTab === "Notifications" ? (
-            <OpsPanel className="p-5">
-              <SectionHeader title="Notifications" subtitle="Pilih alert yang penting untuk operator control room dan supervisor." />
-              <div className="mt-5 space-y-4">
-                {[
-                  ["cutoffAlert", "Cutoff alerts", "Peringatan saat cutoff penerbangan sudah dekat."],
-                  ["exceptionAlert", "Exception alerts", "Peringatan untuk shipment hold atau data bermasalah."],
-                  ["soundAlert", "Sound alerts", "Aktifkan bunyi notifikasi di control room."],
-                  ["emailDigest", "Email digest", "Ringkasan harian untuk supervisor atau admin."],
-                ].map(([key, title, copy]) => (
-                  <PreferenceToggleCard
-                    key={key}
-                    title={title}
-                    copy={copy}
-                    checked={Boolean(draft[key as keyof typeof draft])}
-                    onChange={(checked) => setDraft((current) => ({ ...current, [key]: checked }))}
-                  />
-                ))}
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-[2rem] font-[family:var(--font-heading)] font-black tracking-[-0.04em] text-[color:var(--text-strong)]">
+                  Notifications
+                </h2>
+                <p className="mt-1 text-base text-[color:var(--muted-fg)]">Alert, bunyi, dan preview notifikasi</p>
               </div>
-            </OpsPanel>
+
+              <OpsPanel className="p-5">
+                <SectionHeader title="Notifications" subtitle="Pilih alert yang penting untuk operator control room dan supervisor." />
+                <div className="mt-5 space-y-4">
+                  {[
+                    ["cutoffAlert", "Cutoff alerts", "Peringatan saat cutoff penerbangan sudah dekat."],
+                    ["exceptionAlert", "Exception alerts", "Peringatan untuk shipment hold atau data bermasalah."],
+                    ["soundAlert", "Sound alerts", "Aktifkan bunyi notifikasi di control room."],
+                    ["emailDigest", "Email digest", "Ringkasan harian untuk supervisor atau admin."],
+                  ].map(([key, title, copy]) => (
+                    <PreferenceToggleCard
+                      key={key}
+                      title={title}
+                      copy={copy}
+                      checked={Boolean(draft[key as keyof typeof draft])}
+                      onChange={async (checked) => {
+                        applyDraftPatch(
+                          { [key]: checked } as Partial<SettingsDraft>,
+                          {
+                            title: `${title} ${checked ? "diaktifkan" : "dimatikan"}`,
+                            copy:
+                              key === "soundAlert" && checked
+                                ? "Preview suara akan diputar agar Anda langsung tahu toggle ini aktif."
+                                : "Perubahan ini sudah aktif sebagai preview di browser saat ini.",
+                            tone: checked ? "success" : "info",
+                          },
+                        );
+
+                        if (key === "soundAlert" && checked) {
+                          await playAlertTone("sound");
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <div className="mt-5 grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+                  <div className="rounded-[24px] border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] p-4">
+                    <div className="border-b border-[color:var(--border-soft)] pb-4">
+                      <h3 className="font-[family:var(--font-heading)] text-[1.25rem] font-extrabold tracking-[-0.03em] text-[color:var(--text-strong)]">
+                        Test Center
+                      </h3>
+                      <p className="mt-1 text-sm leading-6 text-[color:var(--muted-fg)]">
+                        Jalankan preview supaya operator langsung bisa melihat efek setiap toggle.
+                      </p>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <button
+                        type="button"
+                        className="btn btn-secondary justify-start"
+                        disabled={!draft.cutoffAlert}
+                        onClick={() => void triggerNotificationPreview("cutoff")}
+                      >
+                        <TriangleAlert size={16} />
+                        Tes cutoff alert
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary justify-start"
+                        disabled={!draft.exceptionAlert}
+                        onClick={() => void triggerNotificationPreview("exception")}
+                      >
+                        <BellRing size={16} />
+                        Tes exception alert
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary justify-start"
+                        disabled={!draft.soundAlert}
+                        onClick={() => void triggerNotificationPreview("sound")}
+                      >
+                        <Volume2 size={16} />
+                        Tes bunyi alarm
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary justify-start"
+                        disabled={!draft.emailDigest}
+                        onClick={() => void triggerNotificationPreview("email")}
+                      >
+                        <Mail size={16} />
+                        Tes email digest
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[24px] border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] p-4">
+                    <div className="border-b border-[color:var(--border-soft)] pb-4">
+                      <h3 className="font-[family:var(--font-heading)] text-[1.25rem] font-extrabold tracking-[-0.03em] text-[color:var(--text-strong)]">
+                        Live Status
+                      </h3>
+                      <p className="mt-1 text-sm leading-6 text-[color:var(--muted-fg)]">
+                        Ringkasan preview terakhir dari settings.
+                      </p>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusBadge value={draft.soundAlert ? "success" : "disabled"} label={draft.soundAlert ? "Sound on" : "Sound off"} className="normal-case tracking-normal" />
+                        <StatusBadge value={draft.cutoffAlert ? "warning" : "disabled"} label={draft.cutoffAlert ? "Cutoff on" : "Cutoff off"} className="normal-case tracking-normal" />
+                        <StatusBadge value={draft.exceptionAlert ? "error" : "disabled"} label={draft.exceptionAlert ? "Exception on" : "Exception off"} className="normal-case tracking-normal" />
+                      </div>
+
+                      <div className="rounded-[20px] border border-[color:var(--border-soft)] bg-[color:var(--panel-bg)] p-4">
+                        {previewNotice ? (
+                          <>
+                            <StatusBadge value={previewNotice.tone} label={previewNotice.title} className="normal-case tracking-normal" />
+                            <p className="mt-3 text-sm leading-7 text-[color:var(--muted-fg)]">{previewNotice.copy}</p>
+                          </>
+                        ) : (
+                          <p className="text-sm leading-7 text-[color:var(--muted-fg)]">
+                            Belum ada preview. Jalankan salah satu tombol tes untuk melihat dampak notifikasi, suara, atau email digest.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </OpsPanel>
+            </div>
           ) : null}
 
           {activeTab === "Display Preferences" ? (
-            <OpsPanel className="p-5">
-              <SectionHeader title="Display Preferences" subtitle="Atur mode tampilan utama tanpa mengubah perilaku backend atau data." />
-              <div className="mt-5 grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="label">Theme</label>
-                  <select className="select-field" value={draft.theme} onChange={(event) => setDraft((current) => ({ ...current, theme: event.target.value as "light" | "dark" }))}>
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label">Refresh Interval (detik)</label>
-                  <input className="input-field" type="number" min={5} max={60} value={draft.refreshIntervalSeconds} onChange={(event) => setDraft((current) => ({ ...current, refreshIntervalSeconds: Number(event.target.value) }))} />
-                </div>
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-[2rem] font-[family:var(--font-heading)] font-black tracking-[-0.04em] text-[color:var(--text-strong)]">
+                  Display Preferences
+                </h2>
+                <p className="mt-1 text-base text-[color:var(--muted-fg)]">Preview tema dan ritme refresh secara langsung</p>
               </div>
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <PreferenceToggleCard
-                  title="Compact row mode"
-                  copy="Menghemat ruang untuk operator dengan banyak tabel."
-                  checked={draft.compactRows}
-                  onChange={(checked) => setDraft((current) => ({ ...current, compactRows: checked }))}
-                />
-                <PreferenceToggleCard
-                  title="Auto-refresh"
-                  copy="Refresh data otomatis untuk ritme kargo udara yang cepat."
-                  checked={draft.autoRefresh}
-                  onChange={(checked) => setDraft((current) => ({ ...current, autoRefresh: checked }))}
-                />
-              </div>
-            </OpsPanel>
+
+              <OpsPanel className="p-5">
+                <SectionHeader title="Display Preferences" subtitle="Atur mode tampilan utama tanpa mengubah perilaku backend atau data." />
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="label">Theme</label>
+                    <select
+                      className="select-field"
+                      value={draft.theme}
+                      onChange={(event) =>
+                        applyDraftPatch(
+                          { theme: event.target.value as "light" | "dark" },
+                          {
+                            title: `Mode ${event.target.value === "dark" ? "gelap" : "terang"} aktif`,
+                            copy: "Theme sekarang dipreview langsung di seluruh shell tanpa perlu menunggu tombol simpan.",
+                            tone: "success",
+                          },
+                        )
+                      }
+                    >
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Refresh Interval (detik)</label>
+                    <input
+                      className="input-field"
+                      type="number"
+                      min={5}
+                      max={60}
+                      value={draft.refreshIntervalSeconds}
+                      onChange={(event) => {
+                        const nextValue = clampRefreshInterval(Number(event.target.value));
+                        applyDraftPatch(
+                          { refreshIntervalSeconds: nextValue },
+                          {
+                            title: "Interval refresh diperbarui",
+                            copy: `Jika auto-refresh aktif, dashboard akan memakai interval ${nextValue} detik.`,
+                            tone: "info",
+                          },
+                        );
+                      }}
+                      disabled={!draft.autoRefresh}
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <PreferenceToggleCard
+                    title="Compact row mode"
+                    copy="Menghemat ruang untuk operator dengan banyak tabel."
+                    checked={draft.compactRows}
+                    onChange={(checked) =>
+                      applyDraftPatch(
+                        { compactRows: checked },
+                        {
+                          title: checked ? "Compact mode aktif" : "Compact mode dimatikan",
+                          copy: "Shell langsung menyesuaikan density tabel agar efeknya bisa dilihat saat itu juga.",
+                          tone: checked ? "success" : "info",
+                        },
+                      )
+                    }
+                  />
+                  <PreferenceToggleCard
+                    title="Auto-refresh"
+                    copy="Refresh data otomatis untuk ritme kargo udara yang cepat."
+                    checked={draft.autoRefresh}
+                    onChange={(checked) =>
+                      applyDraftPatch(
+                        { autoRefresh: checked },
+                        {
+                          title: checked ? "Auto-refresh aktif" : "Auto-refresh dimatikan",
+                          copy: checked
+                            ? `Dashboard akan memakai interval ${draft.refreshIntervalSeconds} detik.`
+                            : "Polling otomatis dihentikan, operator harus memakai tombol refresh manual.",
+                          tone: checked ? "success" : "warning",
+                        },
+                      )
+                    }
+                  />
+                </div>
+                <div className="mt-5 rounded-[24px] border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] p-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <StatusBadge value={draft.theme === "dark" ? "info" : "success"} label={`Theme ${draft.theme}`} className="normal-case tracking-normal" />
+                    <StatusBadge value={draft.compactRows ? "success" : "disabled"} label={draft.compactRows ? "Compact on" : "Compact off"} className="normal-case tracking-normal" />
+                    <StatusBadge value={draft.autoRefresh ? "warning" : "disabled"} label={draft.autoRefresh ? `Auto ${draft.refreshIntervalSeconds}s` : "Auto refresh off"} className="normal-case tracking-normal" />
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-[color:var(--muted-fg)]">
+                    Mode tema, compact rows, dan interval refresh sekarang dipreview langsung. Klik <span className="font-semibold text-[color:var(--text-strong)]">Simpan</span> agar tetap tersimpan setelah refresh.
+                  </p>
+                </div>
+              </OpsPanel>
+            </div>
           ) : null}
 
           {activeTab === "Sidebar Preferences" ? (
-            <OpsPanel className="p-5">
-              <SectionHeader title="Sidebar Preferences" subtitle="Kontrol perilaku shell agar nyaman dipakai pada layar lebar maupun sempit." />
-              <div className="mt-5">
-                <PreferenceToggleCard
-                  title="Default collapsed sidebar"
-                  copy="Aktifkan mode collapse sebagai default untuk layar yang lebih sempit."
-                  checked={draft.sidebarCollapsed}
-                  onChange={(checked) => setDraft((current) => ({ ...current, sidebarCollapsed: checked }))}
-                />
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-[2rem] font-[family:var(--font-heading)] font-black tracking-[-0.04em] text-[color:var(--text-strong)]">
+                  Sidebar Preferences
+                </h2>
+                <p className="mt-1 text-base text-[color:var(--muted-fg)]">Preview perilaku navigasi utama</p>
               </div>
-            </OpsPanel>
+
+              <OpsPanel className="p-5">
+                <SectionHeader title="Sidebar Preferences" subtitle="Kontrol perilaku shell agar nyaman dipakai pada layar lebar maupun sempit." />
+                <div className="mt-5">
+                  <PreferenceToggleCard
+                    title="Default collapsed sidebar"
+                    copy="Aktifkan mode collapse sebagai default untuk layar yang lebih sempit."
+                    checked={draft.sidebarCollapsed}
+                    onChange={(checked) =>
+                      applyDraftPatch(
+                        { sidebarCollapsed: checked },
+                        {
+                          title: checked ? "Sidebar collapse aktif" : "Sidebar expanded aktif",
+                          copy: "Shell kiri langsung berubah agar operator bisa menilai apakah navigasi ini nyaman dipakai.",
+                          tone: checked ? "success" : "info",
+                        },
+                      )
+                    }
+                  />
+                </div>
+              </OpsPanel>
+            </div>
           ) : null}
         </div>
       </div>

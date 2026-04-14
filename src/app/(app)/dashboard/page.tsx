@@ -73,6 +73,18 @@ type DashboardData = {
   }[];
 };
 
+type DashboardSettingsPayload = {
+  settings: {
+    autoRefresh: boolean;
+    refreshIntervalSeconds: number;
+  } | null;
+};
+
+type DashboardRefreshSettings = {
+  autoRefresh: boolean;
+  refreshIntervalSeconds: number;
+};
+
 function getCurrentShift(): "Pagi" | "Siang" | "Malam" {
   const hour = Number(
     new Intl.DateTimeFormat("en-GB", {
@@ -102,6 +114,10 @@ export default function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [shift, setShift] = useState<"Pagi" | "Siang" | "Malam">(getCurrentShift);
+  const [refreshSettings, setRefreshSettings] = useState({
+    autoRefresh: true,
+    refreshIntervalSeconds: 5,
+  });
 
   const loadDashboard = useCallback(async () => {
     const response = await fetch("/api/dashboard", { cache: "no-store" });
@@ -116,30 +132,58 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadDashboard();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [loadDashboard]);
+
+  useEffect(() => {
     let mounted = true;
 
-    async function load() {
-      const response = await fetch("/api/dashboard", { cache: "no-store" });
-      if (!response.ok || !mounted) {
-        return;
-      }
+    async function loadSettings() {
+      const response = await fetch("/api/settings", { cache: "no-store" });
+      if (!response.ok || !mounted) return;
 
-      const payload = (await response.json()) as DashboardData;
-      setData(payload);
-      setLoading(false);
-      setLastUpdated(new Date().toISOString());
+      const payload = (await response.json()) as DashboardSettingsPayload;
+      setRefreshSettings({
+        autoRefresh: payload.settings?.autoRefresh ?? true,
+        refreshIntervalSeconds: payload.settings?.refreshIntervalSeconds ?? 5,
+      });
     }
 
-    void load();
-    const timer = window.setInterval(() => {
-      void load();
-    }, 5000);
+    void loadSettings();
 
     return () => {
       mounted = false;
-      window.clearInterval(timer);
     };
   }, []);
+
+  useEffect(() => {
+    function handleSettingsPreview(event: Event) {
+      const detail = (event as CustomEvent<Partial<DashboardRefreshSettings>>).detail;
+      if (!detail) return;
+
+      setRefreshSettings((current) => ({
+        autoRefresh: detail.autoRefresh ?? current.autoRefresh,
+        refreshIntervalSeconds: detail.refreshIntervalSeconds ?? current.refreshIntervalSeconds,
+      }));
+    }
+
+    window.addEventListener("skyhub:settings-preview", handleSettingsPreview as EventListener);
+    return () => window.removeEventListener("skyhub:settings-preview", handleSettingsPreview as EventListener);
+  }, []);
+
+  useEffect(() => {
+    if (!refreshSettings.autoRefresh) return;
+
+    const timer = window.setInterval(() => {
+      void loadDashboard();
+    }, Math.max(5, refreshSettings.refreshIntervalSeconds) * 1000);
+
+    return () => window.clearInterval(timer);
+  }, [loadDashboard, refreshSettings.autoRefresh, refreshSettings.refreshIntervalSeconds]);
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -207,7 +251,13 @@ export default function DashboardPage() {
             </button>
             <div className="topbar-button hidden xl:flex">
               <Clock3 size={16} />
-              <span>{lastUpdated ? `Update ${formatRelativeShort(lastUpdated)}` : "Menunggu data"}</span>
+              <span>
+                {refreshSettings.autoRefresh
+                  ? `Auto ${Math.max(5, refreshSettings.refreshIntervalSeconds)} detik • ${lastUpdated ? `update ${formatRelativeShort(lastUpdated)}` : "menunggu data"}`
+                  : lastUpdated
+                    ? `Auto-refresh off • update ${formatRelativeShort(lastUpdated)}`
+                    : "Auto-refresh off"}
+              </span>
             </div>
           </>
         }
