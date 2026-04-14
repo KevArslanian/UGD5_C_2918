@@ -167,6 +167,29 @@ const companyDetails = [
   },
 ] as const;
 
+const aboutHighlights = [
+  {
+    icon: Building2,
+    label: "Operations Center",
+    value: "SkyHub Operations Center dengan alur monitoring yang disusun untuk kebutuhan cargo bandara dan tim supervisor.",
+  },
+  {
+    icon: ScrollText,
+    label: "Core Services",
+    value: "AWB Tracking, Flight Board, Manifest Monitoring, Audit and Alerts dalam satu control surface yang rapi.",
+  },
+  {
+    icon: Globe2,
+    label: "Coverage",
+    value: "Koordinasi cargo domestik dan internasional dengan fokus pada keterbacaan data dan kepastian status.",
+  },
+  {
+    icon: ShieldCheck,
+    label: "Platform Status",
+    value: "Enterprise cargo operations platform yang dirancang untuk ritme shift panjang dan keputusan cepat.",
+  },
+] as const;
+
 const demoCredentials = [
   "Operator: operator@skyhub.test / operator123",
   "Supervisor: supervisor@skyhub.test / operator123",
@@ -174,6 +197,7 @@ const demoCredentials = [
 
 export default function LoginPage() {
   const router = useRouter();
+  const [activeHeroPanel, setActiveHeroPanel] = useState<"about" | "note">("about");
   const [email, setEmail] = useState("operator@skyhub.test");
   const [password, setPassword] = useState("operator123");
   const [remember, setRemember] = useState(true);
@@ -330,17 +354,6 @@ export default function LoginPage() {
 
               <div className="rounded-[30px] border border-[color:var(--border-soft)] bg-[color:var(--panel-bg)] px-6 py-6 shadow-[var(--shadow-soft)]">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--brand-primary-2)]">
-                  About SkyHub
-                </p>
-                <p className="mt-4 text-sm leading-7 text-[color:var(--muted-fg)]">
-                  SkyHub menghadirkan sistem monitoring cargo udara yang berfokus pada kecepatan informasi,
-                  keterbacaan tinggi, dan kendali operasional yang lebih presisi untuk kebutuhan bandara,
-                  gudang, dan tim supervisor.
-                </p>
-              </div>
-
-              <div className="rounded-[30px] border border-[color:var(--border-soft)] bg-[color:var(--panel-bg)] px-6 py-6 shadow-[var(--shadow-soft)]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--brand-primary-2)]">
                   Contact Information
                 </p>
 
@@ -381,26 +394,6 @@ export default function LoginPage() {
                           );
                         })}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[30px] border border-[color:var(--border-soft)] bg-[color:var(--panel-bg)] px-6 py-6 shadow-[var(--shadow-soft)]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--brand-primary-2)]">
-                  Company Details
-                </p>
-
-                <div className="mt-5 grid gap-3">
-                  {companyDetails.map((item) => (
-                    <div
-                      key={item.label}
-                      className="rounded-[20px] border border-[color:var(--border-soft)] bg-[color:var(--panel-muted)] px-4 py-4"
-                    >
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted-2)]">
-                        {item.label}
-                      </p>
-                      <p className="mt-2 text-sm leading-7 text-[color:var(--text-strong)]">{item.value}</p>
                     </div>
                   ))}
                 </div>
@@ -482,21 +475,102 @@ export default function LoginPage() {
                   ))}
                 </div>
 
-                <div className="max-w-[780px] rounded-[30px] border border-white/14 bg-white/10 px-6 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.14)] backdrop-blur-md">
-                  <div className="flex items-start gap-4">
-                    <span className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-white/12 text-white">
-                      <BellRing size={18} />
-                    </span>
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
+                <div className="max-w-[880px] rounded-[30px] border border-white/14 bg-white/10 px-6 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.14)] backdrop-blur-md">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setActiveHeroPanel("about")}
+                        className={`rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] transition ${
+                          activeHeroPanel === "about"
+                            ? "border-white/30 bg-white/18 text-white"
+                            : "border-white/12 bg-white/6 text-white/70 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        About Us
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveHeroPanel("note")}
+                        className={`rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] transition ${
+                          activeHeroPanel === "note"
+                            ? "border-white/30 bg-white/18 text-white"
+                            : "border-white/12 bg-white/6 text-white/70 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
                         Operator Note
-                      </p>
-                      <p className="mt-2 text-sm leading-7 text-white/80">
-                        Tampilan dibuat dengan fokus pada keterbacaan cepat, struktur yang stabil, dan
-                        navigasi yang mudah dipahami untuk kebutuhan operasional harian.
-                      </p>
+                      </button>
                     </div>
+
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/62">
+                      Company Profile
+                    </p>
                   </div>
+
+                  {activeHeroPanel === "about" ? (
+                    <div className="mt-5 grid gap-5">
+                      <div className="max-w-[760px]">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
+                          About SkyHub
+                        </p>
+                        <p className="mt-3 text-sm leading-7 text-white/82">
+                          SkyHub menghadirkan sistem operasional cargo udara yang menyatukan monitoring
+                          shipment, manifest, flight board, dan audit log dalam antarmuka yang formal,
+                          stabil, dan mudah dibaca untuk penggunaan harian di control room.
+                        </p>
+                      </div>
+
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {aboutHighlights.map(({ icon: Icon, label, value }) => (
+                          <div
+                            key={label}
+                            className="rounded-[24px] border border-white/12 bg-white/8 px-4 py-4"
+                          >
+                            <div className="flex items-start gap-3">
+                              <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-white/12 text-white">
+                                <Icon size={18} />
+                              </span>
+                              <div>
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/68">
+                                  {label}
+                                </p>
+                                <p className="mt-2 text-sm leading-6 text-white/82">{value}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {companyDetails.map((item) => (
+                          <div
+                            key={item.label}
+                            className="rounded-[22px] border border-white/10 bg-white/6 px-4 py-3"
+                          >
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/64">
+                              {item.label}
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-white/82">{item.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-5 flex items-start gap-4">
+                      <span className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] bg-white/12 text-white">
+                        <BellRing size={18} />
+                      </span>
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
+                          Operator Note
+                        </p>
+                        <p className="mt-2 text-sm leading-7 text-white/80">
+                          Tampilan dibuat dengan fokus pada keterbacaan cepat, struktur yang stabil, dan
+                          navigasi yang mudah dipahami untuk kebutuhan operasional harian.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
